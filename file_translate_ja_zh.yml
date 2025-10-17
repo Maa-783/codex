@@ -1,0 +1,139 @@
+kind: app
+version: 0.4.0
+dependencies: []
+app:
+  name: 中日文件翻译助手
+  description: 支持用户上传文件并在中文与日文之间互译的智能助手
+  icon: 📄
+  icon_background: "#F5F5F5"
+  mode: advanced-chat
+  use_icon_as_answer_icon: false
+  capabilities: []
+  conversation_variables: []
+  environment_variables: []
+  rag_pipeline_variables: []
+workflow:
+  features:
+    opening_statement: "请上传需要在中文和日文之间互译的文件，我会为您完成翻译。"
+    suggested_questions:
+      - "如何在保持格式的前提下翻译这份中文文档？"
+      - "请把我上传的日文资料翻译成中文摘要。"
+      - "能否只翻译文件中的重点段落？"
+    suggested_questions_after_answer:
+      enabled: false
+    file_upload:
+      enabled: true
+      allowed_file_extensions:
+        - txt
+        - docx
+        - pdf
+        - pptx
+        - xlsx
+      allowed_file_types:
+        - document
+      allowed_file_upload_methods:
+        - local_file
+        - remote_url
+      number_limits: 5
+      fileUploadConfig:
+        file_size_limit: 15728640
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    text_to_speech:
+      enabled: false
+  graph:
+    edges:
+      - id: edge_start_llm
+        type: custom
+        source: start
+        sourceHandle: source
+        target: llm
+        targetHandle: target
+        data:
+          sourceType: start
+          targetType: llm
+      - id: edge_llm_answer
+        type: custom
+        source: llm
+        sourceHandle: source
+        target: answer
+        targetHandle: target
+        data:
+          sourceType: llm
+          targetType: answer
+    nodes:
+      - id: start
+        type: custom
+        position:
+          x: 100
+          y: 300
+        data:
+          type: start
+          title: Start
+          variables: []
+          outputs: []
+      - id: llm
+        type: custom
+        position:
+          x: 400
+          y: 300
+        data:
+          type: llm
+          title: 中日翻译
+          variables: []
+          outputs:
+            - id: text
+              name: text
+              type: string
+          selected: true
+          context:
+            enabled: false
+            variable_selector: []
+          memory:
+            query_prompt_template: "{{#sys.query#}}\n\n{{#sys.files#}}"
+            role_prefix:
+              assistant: ""
+              user: ""
+            window:
+              enabled: false
+              size: 10
+          model:
+            provider: langgenius/deepseek/deepseek
+            name: deepseek-chat
+            mode: chat
+            completion_params:
+              temperature: 0.2
+          prompt_template:
+            - id: system_prompt
+              role: system
+              text: |
+                你是一名专注于中文与日文双向翻译的语言助手。
+                - 当用户上传文件时，仔细阅读 {{#sys.files#}} 中提供的内容。
+                - 识别文本原始语言（中文或日文），并将其准确翻译为另一种语言。
+                - 保留结构、段落顺序、标题与列表等格式信息。
+                - 对表格或难以直接翻译的元素，请使用清晰的说明或项目符号表达。
+                - 当文件内容过长无法一次性输出时，提示用户分批上传或说明可提供的部分。
+                - 如果用户给出额外指示（例如仅摘要或重点段落），在翻译中遵循这些要求。
+                - 若未检测到可翻译文本，请礼貌地告知用户并请求重新提供文件。
+                - 回复语言请与翻译目标语言一致，并在开头注明“翻译结果”。
+          vision:
+            enabled: false
+      - id: answer
+        type: custom
+        position:
+          x: 700
+          y: 300
+        data:
+          type: answer
+          title: Answer
+          variables: []
+          outputs: []
+          answer: "{{#llm.text#}}"
+  viewport:
+    x: 0
+    y: 0
+    zoom: 1

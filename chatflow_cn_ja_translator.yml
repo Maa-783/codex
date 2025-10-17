@@ -1,0 +1,126 @@
+# chatflow_cn_ja_translator.yml
+kind: app
+version: 0.4.0
+dependencies: []
+app:
+  name: 中日翻译助手
+  description: 提供中文与日文之间的高质量互译服务
+  icon: globe-alt
+  icon_background: '#F59E0B'
+  mode: advanced-chat
+  use_icon_as_answer_icon: false
+conversation_variables: []
+environment_variables: []
+rag_pipeline_variables: []
+workflow:
+  features:
+    file_upload:
+      enabled: false
+      allowed_file_extensions: []
+      allowed_file_types: []
+      allowed_file_upload_methods: []
+      fileUploadConfig:
+        file_size_limit: 0
+        workflow_file_upload_limit: 0
+      number_limits: 0
+    opening_statement: "こんにちは！中国語と日本語の翻訳をお任せください。"
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - 请将下面的句子翻译成日语。
+      - この文章を中国語に訳してください。
+      - 请帮我润色下面的中日双语内容。
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ""
+      voice: ""
+  graph:
+    edges:
+      - id: edge-start-llm
+        type: custom
+        source: start
+        target: llm
+        sourceHandle: source
+        targetHandle: target
+        data:
+          sourceType: start
+          targetType: llm
+      - id: edge-llm-answer
+        type: custom
+        source: llm
+        target: answer
+        sourceHandle: source
+        targetHandle: target
+        data:
+          sourceType: llm
+          targetType: answer
+    nodes:
+      - id: start
+        type: custom
+        position:
+          x: 20
+          y: 20
+        data:
+          type: start
+          title: 开始
+          variables: []
+          outputs: []
+      - id: llm
+        type: custom
+        position:
+          x: 320
+          y: 20
+        data:
+          type: llm
+          title: 中日翻译模型
+          variables: []
+          outputs: []
+          selected: true
+          context:
+            enabled: false
+            variable_selector: []
+          memory:
+            query_prompt_template: "{{#sys.query#}}\n\n{{#sys.files#}}"
+            role_prefix:
+              assistant: ""
+              user: ""
+            window:
+              enabled: false
+              size: 10
+          model:
+            provider: langgenius/deepseek/deepseek
+            name: deepseek-chat
+            mode: chat
+            completion_params:
+              temperature: 0.2
+          prompt_template:
+            - role: system
+              text: |-
+                あなたは熟練した日中翻訳アシスタントです。ユーザーの入力言語が中国語なら自然な日本語に翻訳し、日本語なら自然な中国語に翻訳してください。
+                重要な固有名詞や技術用語は文脈に合わせて最適な訳語を選び、原文の語気や敬語レベルを保ってください。
+                原文と訳文以外の余計な説明は出力せず、必要に応じて原文中の数値や格式をそのまま残してください。
+            - role: user
+              text: "{{#sys.query#}}"
+          vision:
+            enabled: false
+      - id: answer
+        type: custom
+        position:
+          x: 620
+          y: 20
+        data:
+          type: answer
+          title: 答案
+          variables: []
+          outputs: []
+          answer: "{{#llm.text#}}"
+    viewport:
+      x: 0
+      y: 0
+      zoom: 1
